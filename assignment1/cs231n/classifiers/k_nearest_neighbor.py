@@ -1,7 +1,6 @@
 from builtins import range
 from builtins import object
 import numpy as np
-from past.builtins import xrange
 
 
 class KNearestNeighbor(object):
@@ -76,9 +75,14 @@ class KNearestNeighbor(object):
                 # not use a loop over dimension, nor use np.linalg.norm().          #
                 #####################################################################
                 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-                pass
-
+                vec_test = X[i, :]
+                vec_train = self.X_train[j, :]
+                dists[i, j] = np.sqrt(np.sum(np.square((vec_test - vec_train))))
+                # if (i < 5 and j < 5):
+                #     print(dists[i, j])
+                #     print(X[i, :])
+                #     print(self.X_train[j, :])
+                #     print(np.linalg.norm(X[i, :] - self.X_train[j, :]))
                 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
 
@@ -100,9 +104,7 @@ class KNearestNeighbor(object):
             # Do not use np.linalg.norm().                                        #
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
-
+            dists[i] = np.sqrt(np.sum(np.square(X[i] - self.X_train), axis=1))
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
 
@@ -130,9 +132,11 @@ class KNearestNeighbor(object):
         #       and two broadcast sums.                                         #
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
-
+        dists[:, :] = -2 * X @ self.X_train.T
+        dists[:, :] = dists[:, :] + np.sum(np.square(X), axis = 1).reshape(-1, 1) # auto broadcast
+        dists[:, :] = dists[:, :] + np.sum(np.square(self.X_train), axis = 1).reshape(1, -1) # auto broadcast
+        # a bug： when num_test == num_train, it will raise ambiguous broadcast
+        dists = np.sqrt(dists)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
 
@@ -163,8 +167,15 @@ class KNearestNeighbor(object):
             # Hint: Look up the function numpy.argsort.                             #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
+            sorted_idx = np.argsort(dists[i, :])
+            k_nearest_idx = sorted_idx[:k]
+            closest_y = self.y_train[k_nearest_idx]
+            # if (i == 0):
+            #     print(dists[i, :10])
+            #     print(sorted_idx)
+            #     print(k_nearest_idx)
+            #     print(dists[i, k_nearest_idx[0]])
+            #     print(closest_y)
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             #########################################################################
@@ -176,8 +187,14 @@ class KNearestNeighbor(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
-
+            cnt = np.bincount(closest_y, minlength=10)
+            max_cnt = np.amax(cnt)
+            # tie breaker: find the first label
+            for label in closest_y:
+                if cnt[label] == max_cnt:
+                    # aha that's it
+                    y_pred[i] = label
+                    break
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         return y_pred
