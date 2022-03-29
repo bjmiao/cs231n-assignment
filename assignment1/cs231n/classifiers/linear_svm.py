@@ -54,10 +54,26 @@ def svm_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
-
+    for i in range(num_train):
+        scores = X[i].dot(W)
+        correct_class_score = scores[y[i]]
+        for j in range(num_classes):
+            indicator = 0
+            if j == y[i]:
+                for k in range(num_classes):
+                    margin = scores[k] - correct_class_score + 1 
+                    if (j != k and margin > 0):
+                        indicator -= 1
+            else:
+                margin = scores[j] - correct_class_score + 1
+                if margin > 0:
+                    indicator = 1
+            dW[:, j] += indicator * X[i]
+        # if (i == 0):
+        #     print(dW)
+    dW = dW / num_train
+    dW += 2 * reg * W
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
     return loss, dW
 
 
@@ -77,7 +93,16 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    num_class = W.shape[1]  # C
+    num_train = X.shape[0]  # N
+    scores = X.dot(W) # N * C
+    index = (range(num_train), y) #
+    correct_class_score = scores[index] # (N, )
+    margin = scores - correct_class_score.reshape(-1, 1) + 1 # N * C
+    margin[margin < 0] = 0
+    margin[index] = 0
+    loss = np.sum(margin)
+    loss /= num_train
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -92,7 +117,22 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    indicator = margin > 0  # N * C
+    indicator = indicator.astype(np.int8)
+    indicator[index] = - np.sum(indicator, axis=1)
+    # print(margin[:2])
+    # print(indicator[:2])
+    # i = 0
+    # print(X[i], y[i])
+    # a = X[i].reshape(-1, 1) @ indicator[i].reshape(1, -1)
+    # print(a)
+    # for i in range(num_train):
+        # print(i)
+    # print(X.shape)
+    # print(indicator.shape)
+    dW = X.T @ indicator
+    dW = dW / num_train
+    dW += 2 * reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
